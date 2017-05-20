@@ -1,0 +1,68 @@
+- name: Do a bunch of setups that we need for the VMs
+  hosts: all
+  become: yes
+  tasks:
+    - name: install ntp
+      apt:
+        name: ntp
+        update_cache: yes
+        state: present
+
+    - name: start ntp
+      service:
+        name: ntp
+        state: started
+        enabled: yes
+
+    - name: Ensure /etc/hosts
+      template: src=hosts.j2 dest=/etc/hosts
+
+    - name: make the vagrant user
+      user:
+        name: vagrant
+        group: users
+
+    - name: replace /dev/random with /dev/urandom
+      shell: rm -f /dev/random; ln -s /dev/urandom /dev/random
+
+
+- name: Setup the master
+  hosts: node1-vm
+  become: yes
+  tasks:
+    - name: install curl
+      apt:
+        name: curl
+        state: present
+
+    - name: add cm sources list
+      get_url:
+        url: http://archive.cloudera.com/cm5/ubuntu/precise/amd64/cm/cloudera.list
+        dest: /etc/apt/sources.list.d/cloudera-cm5.list
+
+    - name: add cm key
+      apt_key:
+        url: http://archive.cloudera.com/cm5/ubuntu/precise/amd64/cm/archive.key
+        state: present
+
+    - name: update apt cache
+      apt:
+        update_cache: yes
+
+    - name: install cloudera stuff
+      apt: name={{ item }} state=installed
+      with_items:
+        - oracle-j2sdk1.7
+        - cloudera-manager-server-db
+        - cloudera-manager-server
+        - cloudera-manager-daemons
+
+    - name: init cloudera-scm-server-db
+      command: service cloudera-scm-server-db initdb
+
+    - name: enable cloudera stuff
+      service: name={{ item }} enabled=yes state=started
+      with_items:
+        - cloudera-scm-server-db
+        - cloudera-scm-server
+
