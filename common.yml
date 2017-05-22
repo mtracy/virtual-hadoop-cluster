@@ -1,7 +1,12 @@
+####################################################
+# Setup stuff for things that we need on all nodes #
+####################################################
+
 - name: Do a bunch of setups that we need for the VMs
   hosts: all
   become: yes
   tasks:
+
     - name: install ntp
       yum:
         name: ntp
@@ -19,7 +24,7 @@
         src: templates/selinux
         dest: /etc/selinux/config
 
-    - name: Ensure /etc/hosts
+    - name: template /etc/hosts
       template: src=templates/hosts.j2 dest=/etc/hosts
 
     - name: make the vagrant user
@@ -30,11 +35,15 @@
     - name: replace /dev/random with /dev/urandom
       shell: rm -f /dev/random; ln -s /dev/urandom /dev/random
 
+########################################
+# Setup stuff for the node running CDM #
+########################################
 
 - name: Setup the master
   hosts: node1-vm
   become: yes
   tasks:
+
     - name: install curl
       yum:
         name: curl
@@ -66,3 +75,66 @@
         - cloudera-scm-server-db
         - cloudera-scm-server
 
+#########################################################################
+# The following sections only apply if a kdc is specified in the config #
+#########################################################################
+
+- name: Setup the KDC
+  hosts: kdc
+  become: yes
+  tasks:
+
+    - name: install kerberos server stuff
+      yum: name={{ item }} state=latest
+      with_items:
+        - krb5-server
+        - krb5-libs
+        - krb5-workstation
+
+    - name: template krb5.conf
+      template:
+        src: templates/krb5.j2
+        dest: /etc/krb5.conf
+
+    - name: create the KDC
+      shell: kdb5_util create -s -P admin
+
+    - name: start kdc
+      service:
+        name: krb5kdc
+        state: started
+        enabled: yes
+
+    - name: start kadmin server
+      service:
+        name: kadmin
+        state: started
+        enabled: yes
+
+    - name: add admin principal
+      shell: kadmin.local -q "addprinc -pw admin admin/admin"
+
+    - name: add cloudera principal
+      shell: kadmin.local -q "addprinc -pw admin cloudera-scm/admin"
+
+    - name: copy acl
+      copy:
+        src: templates/kadm5.acl
+        dest: /var/kerberos/krb5kdc/kadm5.acl
+
+
+    - name: restart kadmin server
+      service:
+        name: kadmin
+        state: restarted
+
+- name: Install KDC client dependencies
+  hosts: kdc-clients
+  become: yes
+  tasks:
+
+    - name: install kerberos client stuff
+      yum: name={{ item }} state=latest
+      with_items:
+        - krb5-libs
+        - krb5-workstation

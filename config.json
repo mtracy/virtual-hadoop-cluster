@@ -1,5 +1,6 @@
 {
     "num_nodes": 3,
     "vm_cpus": 8,
-    "vm_mem": 6144
+    "vm_mem": 6144,
+    "kdc" : "node3-vm"
 }

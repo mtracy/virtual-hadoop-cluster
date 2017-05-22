@@ -8,10 +8,11 @@ The number of virtual machines to spin up, the amount of ram per VM, and the num
 * 3 VMs
 * 6GB ram per VM
 * 8 virtual threads per VM
+* MIT KDC running on node3-vm
 
-The FQDN of the machines follow the pattern "node[0-9]+-vm.verticacorp.com". The IP addresses follow the pattern "10.0.10.1X" where "X" is the corresponding node ID. For example, the virtual machine with hostname "node2-vm.verticacorp.com" will have IP address "10.0.10.12". 
+The FQDN of the machines follow the pattern "nodeX-vm.verticacorp.com" where that "X" is a number. The IP addresses follow the pattern "10.0.10.1X" where "X" is the corresponding node ID. For example, the virtual machine with hostname "node2-vm.verticacorp.com" will have IP address "10.0.10.12". 
 
-The Cloudera Manager will be installed on node1-vm (10.0.10.11).
+By default, Cloudera Manager will be installed on node1-vm (10.0.10.11), and a KDC will be installed on node3-vm (10.0.10.13).
 
 ## Usage
 
@@ -45,6 +46,6 @@ After you have installed Hadoop serviced through CDM, you can use the `startComp
 The script will wait until the CDM server is able to respond to API requests, and then will submit a request to start all services in the cluster. It will also wait until the request to start all services has completed. If the request was successful, then it will terminate. If the request was not successful, it will sleep for 30 seconds and then try again. If it fail again, it will sleep for 100 seconds and then give another pair of attempts. If all of these attempts fail then it will not try again.
 
 
-## TODO
+### Kerberos
 
-* Add optional config param to install a MIT Kerberos KDC on a VM
+As mentioned above, an MIT KDC will be installed by default on node3-vm. You can use this to kerberize your CDH cluster. In the CDM Kerberos Wizard, use realm `VERTICACORP.COM` and principal `admin/admin` with password `admin`. Also, let CDM manage the krb5.conf file.

@@ -1,0 +1,21 @@
+[logging]
+ default = FILE:/var/log/krb5libs.log
+ kdc = FILE:/var/log/krb5kdc.log
+ admin_server = FILE:/var/log/kadmind.log
+[libdefaults]
+ default_realm = VERTICACORP.COM
+ dns_lookup_realm = false
+ dns_lookup_kdc = false
+ ticket_lifetime = 24h
+ renew_lifetime = 7d
+ forwardable = true
+[realms]
+ VERTICACORP.COM = {
+{% for item in play_hosts %}
+  kdc = {{ item }}.verticacorp.com
+  admin_server = {{ item }}.verticacorp.com
+{% endfor %}
+ }
+[domain_realm]
+ .verticacorp.com = VERTICACORP.COM
+ verticacorp.com = VERTICACORP.COM

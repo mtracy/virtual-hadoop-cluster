@@ -8,7 +8,6 @@ Vagrant.configure("2") do |config|
   clusterconf[:vm_mem] ||= 6144
   clusterconf[:num_nodes] ||= 3
 
-
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", 6144 ]
     vb.customize ["modifyvm", :id, "--cpus", 8 ]
@@ -25,6 +24,12 @@ Vagrant.configure("2") do |config|
         machine.vm.provision :ansible do |ansible|
           ansible.playbook = "common.yml"
           ansible.limit = "all"
+          if clusterconf.key?(:kdc)
+            ansible.groups = {
+              "kdc" => [clusterconf[:kdc]],
+              "kdc-clients" => ["node[1:"+N.to_s+"]-vm"]
+            }
+          end
         end
       end
     end
