@@ -3,19 +3,24 @@
   become: yes
   tasks:
     - name: install ntp
-      apt:
+      yum:
         name: ntp
         update_cache: yes
-        state: present
+        state: latest
 
     - name: start ntp
       service:
-        name: ntp
+        name: ntpd
         state: started
         enabled: yes
 
+    - name: disable selinux
+      copy:
+        src: templates/selinux
+        dest: /etc/selinux/config
+
     - name: Ensure /etc/hosts
-      template: src=hosts.j2 dest=/etc/hosts
+      template: src=templates/hosts.j2 dest=/etc/hosts
 
     - name: make the vagrant user
       user:
@@ -31,29 +36,24 @@
   become: yes
   tasks:
     - name: install curl
-      apt:
+      yum:
         name: curl
-        state: present
+        state: latest
 
-    - name: add cm sources list
-      get_url:
-        url: http://archive.cloudera.com/cm5/ubuntu/precise/amd64/cm/cloudera.list
-        dest: /etc/apt/sources.list.d/cloudera-cm5.list
+    - name: Add CM repo
+      yum_repository:
+        name: clouderamanager
+        description: Cloudera Manager repo
+        baseurl: https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/
+        gpgkey: https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/RPM-GPG-KEY-cloudera
+        gpgcheck: yes
 
-    - name: add cm key
-      apt_key:
-        url: http://archive.cloudera.com/cm5/ubuntu/precise/amd64/cm/archive.key
-        state: present
-
-    - name: update apt cache
-      apt:
-        update_cache: yes
 
     - name: install cloudera stuff
-      apt: name={{ item }} state=installed
+      yum: name={{ item }} state=latest
       with_items:
         - oracle-j2sdk1.7
-        - cloudera-manager-server-db
+        - cloudera-manager-server-db-2
         - cloudera-manager-server
         - cloudera-manager-daemons
 

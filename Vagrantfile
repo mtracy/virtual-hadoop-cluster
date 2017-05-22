@@ -1,8 +1,7 @@
 Vagrant.configure("2") do |config|
 
   config.ssh.insert_key = false
-  config.vm.box = "precise64"
-  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+  config.vm.box = "omalley/structor-centos6.7"
 
   clusterconf = JSON.parse( IO.read( "config.json" ), opts = { symbolize_names: true } )
   clusterconf[:vm_cpus] ||= 8
